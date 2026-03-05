@@ -1,10 +1,12 @@
-FROM rust:1.85-slim AS builder
-WORKDIR /build
+FROM rust:1.75-slim-bookworm as builder
+WORKDIR /app
 COPY . .
 RUN cargo build --release
 
-FROM debian:trixie-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /build/target/release/va-paste-server /usr/local/bin/
-EXPOSE 8080
-CMD ["va-paste-server"]
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/target/release/va-paste /app/va-paste
+ENV RUST_LOG=info
+EXPOSE 3000
+CMD ["./va-paste"]
