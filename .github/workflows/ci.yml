@@ -9,22 +9,32 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-jobs:
+        with:
+          go-version: '1.21'
+      - name: Check formatting
+        run: |
+          # Check for unformatted Go files using gofmt.
+          # The -s flag simplifies the code, -d shows diffs instead of writing.
+          # If there's any output, it means files are not formatted correctly.
+          if [ -n "$(gofmt -s -d .)" ]; then
+            echo "ERROR: Unformatted Go files found. Please run 'gofmt -s -w .' to format your code."
+            gofmt -s -d . # Print the diff for easier debugging
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      - name: Download Go modules
+        run: go mod download
+      - name: Tidy Go modules
+        run: go mod tidy
+      - name: Run tests
+        run: go test -v ./...
           --health-retries 5
     steps:
     - uses: actions/checkout@v3
