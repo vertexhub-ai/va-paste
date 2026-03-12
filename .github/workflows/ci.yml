@@ -10,15 +10,37 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: password
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    - name: Check Rust code
+      run: cargo check --all-targets --verbose
+    - name: Format Rust code
+      run: cargo fmt --all --check
+    - name: Lint Rust code
+      run: cargo clippy --all-targets -- -D warnings
+    - name: Build Rust crates
+      run: cargo build --verbose --release
+    - name: Run Rust tests
+      run: cargo test --verbose
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'
+    - name: Install Frontend dependencies
+      run: npm install
+      working-directory: frontend
+    - name: Build Frontend
+      run: npm run build
+      working-directory: frontend
+    - name: Run Frontend tests
+      run: npm test
+      working-directory: frontend
         ports:
           - 5432:5432
         options: >-
