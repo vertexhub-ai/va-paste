@@ -6,12 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  CARGO_TERM_COLOR: always
-
-jobs:
-  test:
+  self_review:
+    needs: test
     runs-on: ubuntu-latest
+    continue-on-error: true # Temporarily allow self-review to fail without blocking CI
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run self-review script
     services:
       postgres:
         image: postgres:15
